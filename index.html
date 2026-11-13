@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<!-- ChemBalance: archivo único generado con construir.js a partir de los módulos del proyecto. -->
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ChemBalance — Balanceo de ecuaciones químicas</title>
+
+  <style>
+/* ==========================================================
+   ChemBalance · styles.css (ETAPA 2)
+   1. Variables  2. Base  3. Encabezado y estructura
+   4. Formulario  5. Mensajes  6. Resultado  7. Tablas
+   8. Estados de verificación  9. Pie  10. Adaptación a móvil
+   ========================================================== */
+
+/* ---------- 1. Variables de diseño ---------- */
+:root {
+  --tinta:        #11303b;   /* texto y encabezado */
+  --tinta-suave:  #4a6670;   /* texto secundario */
+  --papel:        #eef4f5;   /* fondo de la página */
+  --superficie:   #ffffff;   /* tarjetas */
+  --linea:        #cddde1;   /* bordes finos */
+  --acento:       #0e7c86;   /* botón principal, foco */
+  --acento-osc:   #0a5d65;
+  --acento-claro: #dff1f2;
+  --ok:           #17803d;
+  --ok-fondo:     #e3f4e8;
+  --error:        #b3261e;
+  --error-fondo:  #fbe9e7;
+  --aviso:        #8a5a00;
+  --aviso-fondo:  #fdf2d9;
+
+  --fuente: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --fuente-formula: "Cambria Math", "Cambria", "Georgia", serif;
+  --fuente-codigo: Consolas, "Courier New", monospace;
+  --radio: 8px;
+}
+
+/* ---------- 2. Base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+[hidden] { display: none !important; }  /* respeta siempre el atributo hidden */
+
+body {
+  margin: 0;
+  font-family: var(--fuente);
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--tinta);
+  background: var(--papel);
+}
+
+h1, h2, h3 { line-height: 1.2; margin: 0 0 .6rem; }
+h2 { font-size: 1.25rem; }
+h3 { font-size: 1rem; margin-top: 1.25rem; color: var(--tinta-suave); }
+p  { margin: 0 0 .75rem; }
+
+code {
+  font-family: var(--fuente-codigo);
+  font-size: .9em;
+  background: var(--acento-claro);
+  padding: .1em .35em;
+  border-radius: 4px;
+}
+
+sub, sup { font-size: .7em; line-height: 0; }
+
+:focus-visible {
+  outline: 3px solid var(--acento);
+  outline-offset: 2px;
+}
+
+/* ---------- 3. Encabezado y estructura ---------- */
+#encabezado {
+  background: var(--tinta);
+  color: #eaf5f6;
+  padding: 2rem 1.25rem 1.75rem;
+  border-bottom: 4px solid var(--acento);
+}
+#encabezado h1 {
+  max-width: 960px;
+  margin: 0 auto .35rem;
+  font-family: var(--fuente-formula);
+  font-size: clamp(2rem, 6vw, 2.8rem);
+  letter-spacing: .01em;
+}
+#encabezado p {
+  max-width: 960px;
+  margin: 0 auto;
+  color: #b9d6da;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.25rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+main > section {
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  padding: 1.25rem;
+}
+
+/* ---------- 4. Formulario ---------- */
+#formulario { display: grid; gap: 1rem; }
+
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  align-items: center;
+}
+legend {
+  padding: 0;
+  margin-bottom: .4rem;
+  font-weight: 600;
+  font-size: .95rem;
+}
+
+/* Botones de opción como selector segmentado */
+fieldset label {
+  position: relative;
+  padding: .5rem 1rem;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  background: var(--papel);
+  cursor: pointer;
+}
+fieldset label input {            /* oculto visualmente, sigue siendo accesible */
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+}
+fieldset label:has(input:checked) {
+  background: var(--acento-claro);
+  border-color: var(--acento);
+  color: var(--acento-osc);
+  font-weight: 600;
+}
+fieldset label:has(input:focus-visible) {
+  outline: 3px solid var(--acento);
+  outline-offset: 2px;
+}
+
+#grupo-ecuacion label { display: block; font-weight: 600; margin-bottom: .4rem; }
+
+#ecuacion {
+  width: 100%;
+  padding: .7rem .85rem;
+  font-family: var(--fuente-codigo);
+  font-size: 1.1rem;
+  color: var(--tinta);
+  background: #fff;
+  border: 1.5px solid var(--linea);
+  border-radius: var(--radio);
+}
+#ecuacion:focus { border-color: var(--acento); outline: 3px solid var(--acento-claro); }
+
+#ayuda-formato { margin: .5rem 0 0; font-size: .875rem; color: var(--tinta-suave); }
+
+#acciones { display: flex; gap: .75rem; flex-wrap: wrap; }
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--radio);
+  transition: background-color .15s;
+}
+#btn-balancear {
+  padding: .65rem 1.6rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--acento);
+  border: 0;
+}
+#btn-balancear:hover { background: var(--acento-osc); }
+#btn-limpiar {
+  padding: .65rem 1.3rem;
+  color: var(--tinta);
+  background: transparent;
+  border: 1.5px solid var(--linea);
+}
+#btn-limpiar:hover { background: var(--papel); }
+
+/* Ejemplos */
+#ejemplos { margin-top: 1.25rem; padding-top: .25rem; border-top: 1px dashed var(--linea); }
+#lista-ejemplos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.ejemplo {
+  padding: .35rem .7rem;
+  font-family: var(--fuente-codigo);
+  font-size: .85rem;
+  color: var(--acento-osc);
+  background: var(--acento-claro);
+  border: 1px solid transparent;
+}
+.ejemplo:hover { border-color: var(--acento); }
+
+/* ---------- 5. Mensajes de error ---------- */
+#mensaje-error {
+  padding: .9rem 1.1rem;
+  color: var(--error);
+  background: var(--error-fondo);
+  border: 1px solid var(--error);
+  border-left-width: 6px;
+  border-radius: var(--radio);
+  font-weight: 500;
+}
+
+/* ---------- 6. Resultado ---------- */
+#resultado-ecuacion {
+  margin: 0;
+  padding: 1rem;
+  background: var(--papel);
+  border-radius: var(--radio);
+  font-family: var(--fuente-formula);
+  font-size: 1.5rem;
+  overflow-wrap: anywhere;
+}
+#resultado-ecuacion.vacio {      /* texto de marcador, sin estilo de fórmula */
+  font-family: var(--fuente);
+  font-size: 1rem;
+  color: var(--tinta-suave);
+}
+
+#procedimiento-contenido ol { padding-left: 1.3rem; }
+#procedimiento-contenido li { margin-bottom: .5rem; }
+
+#panel-limitaciones { border-left: 6px solid var(--aviso); background: var(--aviso-fondo); }
+#panel-limitaciones ul { margin: 0; padding-left: 1.2rem; }
+
+/* ---------- 7. Tablas ---------- */
+.tabla-contenedor { overflow-x: auto; }  /* desplazamiento horizontal en pantallas pequeñas */
+
+table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+th, td { padding: .55rem .75rem; text-align: left; border-bottom: 1px solid var(--linea); }
+thead th { background: var(--tinta); color: #eaf5f6; font-weight: 600; white-space: nowrap; }
+tbody tr:nth-child(even) { background: var(--papel); }
+td { font-variant-numeric: tabular-nums; }
+
+/* ---------- 8. Estados de verificación ---------- */
+.estado-ok, .estado-error {
+  display: inline-block;
+  padding: .1rem .55rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: .85rem;
+}
+.estado-ok    { color: var(--ok);    background: var(--ok-fondo); }
+.estado-error { color: var(--error); background: var(--error-fondo); }
+
+#estado-verificacion.ok    { color: var(--ok);    font-weight: 600; }
+#estado-verificacion.error { color: var(--error); font-weight: 600; }
+
+/* ---------- 9. Pie ---------- */
+#pie { text-align: center; padding: 1.5rem 1rem 2rem; color: var(--tinta-suave); font-size: .875rem; }
+
+/* ---------- 10. Adaptación a móvil ---------- */
+@media (max-width: 600px) {
+  main { padding: .75rem; gap: .75rem; }
+  main > section { padding: 1rem; }
+  #acciones button { flex: 1 1 100%; }
+  #resultado-ecuacion { font-size: 1.2rem; }
+  th, td { padding: .45rem .55rem; font-size: .875rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+/* ---------- 11. Procedimiento y comprobaciones (ETAPA 8) ---------- */
+.paso { margin-bottom: 1rem; }
+.paso h3 { margin: 0 0 .35rem; color: var(--acento-osc); }
+.paso ul { margin: 0; padding-left: 1.2rem; }
+.paso li { margin-bottom: .25rem; overflow-wrap: anywhere; }
+.paso li.subtitulo { list-style: none; margin-left: -1.2rem; margin-top: .6rem; }
+.paso pre {
+  margin: .25rem 0;
+  padding: .6rem .8rem;
+  background: var(--papel);
+  border-radius: var(--radio);
+  overflow-x: auto;
+  font-family: var(--fuente-codigo);
+  font-size: .85rem;
+}
+#agentes-redox { margin-top: .75rem; }
+
+#comprobaciones { list-style: none; margin: 0 0 .75rem; padding: 0; }
+#comprobaciones li { padding: .15rem 0; }
+#comprobaciones .ok::before    { content: "✔ "; color: var(--ok);    font-weight: 700; }
+#comprobaciones .error::before { content: "✘ "; color: var(--error); font-weight: 700; }
+
+</style>
+</head>
+<body>
+
+    <header id="encabezado">
+    <h1>ChemBalance</h1>
+    <p>Balancea ecuaciones químicas tradicionales y reacciones REDOX, y revisa
+       el procedimiento paso a paso.</p>
+  </header>
+
+  <main>
+
+        <section id="panel-entrada" aria-labelledby="titulo-entrada">
+      <h2 id="titulo-entrada">Ecuación a balancear</h2>
+
+      <form id="formulario" novalidate>
+
+                <fieldset id="grupo-tipo">
+          <legend>Tipo de balanceo</legend>
+          <label>
+            <input type="radio" name="tipo" id="tipo-tradicional" value="tradicional" checked>
+            Tradicional
+          </label>
+          <label>
+            <input type="radio" name="tipo" id="tipo-redox" value="redox">
+            REDOX
+          </label>
+        </fieldset>
+
+                <fieldset id="grupo-medio" hidden>
+          <legend>Medio de reacción</legend>
+          <label>
+            <input type="radio" name="medio" id="medio-acido" value="acido" checked>
+            Ácido
+          </label>
+          <label>
+            <input type="radio" name="medio" id="medio-basico" value="basico">
+            Básico
+          </label>
+        </fieldset>
+
+                <div id="grupo-ecuacion">
+          <label for="ecuacion">Ecuación química</label>
+          <input type="text" id="ecuacion" name="ecuacion"
+                 placeholder="Ej.: Fe + O2 -> Fe2O3"
+                 autocomplete="off" spellcheck="false"
+                 aria-describedby="ayuda-formato">
+          <p id="ayuda-formato">
+            Separa las especies con <code>+</code> y usa <code>-&gt;</code> como flecha.
+            Escribe las cargas con <code>^</code>: <code>Fe^2+</code>, <code>MnO4^-</code>.
+          </p>
+        </div>
+
+                <div id="acciones">
+          <button type="submit" id="btn-balancear">Balancear</button>
+          <button type="button" id="btn-limpiar">Limpiar</button>
+        </div>
+      </form>
+
+            <div id="ejemplos">
+        <h3>Ejemplos para probar</h3>
+        <ul id="lista-ejemplos">
+          <li><button type="button" class="ejemplo" data-tipo="tradicional" data-ecuacion="H2 + O2 -> H2O">H2 + O2 -> H2O</button></li>
+          <li><button type="button" class="ejemplo" data-tipo="tradicional" data-ecuacion="Fe + O2 -> Fe2O3">Fe + O2 -> Fe2O3</button></li>
+          <li><button type="button" class="ejemplo" data-tipo="tradicional" data-ecuacion="Al + HCl -> AlCl3 + H2">Al + HCl -> AlCl3 + H2</button></li>
+          <li><button type="button" class="ejemplo" data-tipo="redox" data-medio="acido" data-ecuacion="MnO4^- + Fe^2+ -> Mn^2+ + Fe^3+">MnO4^- + Fe^2+ -> Mn^2+ + Fe^3+ (ácido)</button></li>
+          <li><button type="button" class="ejemplo" data-tipo="redox" data-medio="basico" data-ecuacion="MnO4^- + I^- -> MnO2 + I2">MnO4^- + I^- -> MnO2 + I2 (básico)</button></li>
+        </ul>
+      </div>
+    </section>
+
+        <div id="mensaje-error" role="alert" hidden></div>
+
+        <section id="panel-resultado" aria-labelledby="titulo-resultado" aria-live="polite">
+      <h2 id="titulo-resultado">Ecuación balanceada</h2>
+      <p id="resultado-ecuacion" class="vacio">Aún no hay resultado. Escribe una ecuación y pulsa «Balancear».</p>
+    </section>
+
+        <section id="panel-procedimiento" aria-labelledby="titulo-procedimiento">
+      <h2 id="titulo-procedimiento">Procedimiento</h2>
+
+            <div id="bloque-redox" hidden>
+        <h3>Números de oxidación</h3>
+        <div class="tabla-contenedor">
+          <table id="tabla-oxidacion">
+            <thead>
+              <tr>
+                <th scope="col">Elemento</th>
+                <th scope="col">Número de oxidación inicial</th>
+                <th scope="col">Número de oxidación final</th>
+                <th scope="col">Proceso</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p id="agentes-redox"></p>
+      </div>
+
+            <div id="procedimiento-contenido">
+        <p>El procedimiento aparecerá aquí después de balancear.</p>
+      </div>
+
+    </section>
+
+        <section id="panel-verificacion" aria-labelledby="titulo-verificacion">
+      <h2 id="titulo-verificacion">Verificación</h2>
+      <p id="estado-verificacion">La verificación se ejecuta automáticamente después de balancear.</p>
+      <ul id="comprobaciones"></ul>
+
+      <h3>Átomos por elemento</h3>
+      <div class="tabla-contenedor">
+        <table id="tabla-atomos">
+          <thead>
+            <tr>
+              <th scope="col">Elemento</th>
+              <th scope="col">Átomos en reactivos</th>
+              <th scope="col">Átomos en productos</th>
+              <th scope="col">Estado</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+            <div id="bloque-cargas" hidden>
+        <h3>Carga eléctrica (en unidades de carga elemental, e)</h3>
+        <div class="tabla-contenedor">
+          <table id="tabla-cargas">
+            <thead>
+              <tr>
+                <th scope="col">Carga total de reactivos (e)</th>
+                <th scope="col">Carga total de productos (e)</th>
+                <th scope="col">Estado</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+        <section id="panel-limitaciones" aria-labelledby="titulo-limitaciones">
+      <h2 id="titulo-limitaciones">Alcance y limitaciones</h2>
+      <ul>
+        <li>No admite hidratos (por ejemplo, CuSO4·5H2O).</li>
+        <li>No admite complejos de coordinación.</li>
+        <li>No admite paréntesis anidados; solo paréntesis simples como Ca(OH)2.</li>
+        <li>Los números de oxidación se asignan con reglas generales; las especies con estados de oxidación ambiguos se avisan en lugar de adivinarse.</li>
+        <li>Si una ecuación no pasa la verificación, no se presenta como balanceada.</li>
+      </ul>
+    </section>
+
+  </main>
+
+  <footer id="pie">
+    <p>ChemBalance · herramienta académica de uso local, sin conexión a internet.</p>
+  </footer>
+
+  <script>
+/* ===== fracciones.js ===== */
+/* ==========================================================
+   ChemBalance · fracciones.js (ETAPA 3)
+   Aritmética racional exacta. Usa BigInt para que nunca haya
+   errores de redondeo (0.1 + 0.2 ≠ 0.3 no ocurre aquí).
+   ========================================================== */
+
+/** Máximo común divisor (algoritmo de Euclides). Siempre devuelve un valor >= 0. */
+function mcd(a, b) {
+  a = BigInt(a); b = BigInt(b);
+  if (a < 0n) a = -a;
+  if (b < 0n) b = -b;
+  while (b !== 0n) { [a, b] = [b, a % b]; }
+  return a;
+}
+
+/** Mínimo común múltiplo. Devuelve 0 si alguno de los dos es 0. */
+function mcm(a, b) {
+  a = BigInt(a); b = BigInt(b);
+  if (a === 0n || b === 0n) return 0n;
+  const m = (a / mcd(a, b)) * b;
+  return m < 0n ? -m : m;
+}
+
+/** Número racional num/den, siempre simplificado y con denominador positivo. */
+class Fraccion {
+  constructor(num, den = 1n) {
+    num = BigInt(num); den = BigInt(den);
+    if (den === 0n) throw new Error('División entre cero.');
+    if (den < 0n) { num = -num; den = -den; }
+    const g = mcd(num, den) || 1n;   // mcd(0, den) = den, así que 0/n queda 0/1
+    this.num = num / g;
+    this.den = den / g;
+  }
+
+  sumar(o)          { return new Fraccion(this.num * o.den + o.num * this.den, this.den * o.den); }
+  restar(o)         { return new Fraccion(this.num * o.den - o.num * this.den, this.den * o.den); }
+  multiplicar(o)    { return new Fraccion(this.num * o.num, this.den * o.den); }
+  dividir(o)        { return new Fraccion(this.num * o.den, this.den * o.num); }
+  negar()           { return new Fraccion(-this.num, this.den); }
+
+  esCero()          { return this.num === 0n; }
+  esEntero()        { return this.den === 1n; }
+  esPositiva()      { return this.num > 0n; }
+  igualA(o)         { return this.num === o.num && this.den === o.den; }
+
+  comoTexto()       { return this.den === 1n ? `${this.num}` : `${this.num}/${this.den}`; }
+}
+
+// Permite probar este archivo con Node; en el navegador se ignora.
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { Fraccion, mcd, mcm };
+}
+
+</script>
+  <script>
+/* ===== parser.js ===== */
+/* ==========================================================
+   ChemBalance · parser.js (ETAPA 3)
+   Convierte el texto de una ecuación en objetos:
+     { texto, formula, elementos: {Fe: 2, O: 3}, carga: 0 }
+   Los subíndices se leen DESPUÉS de un elemento o de un paréntesis.
+   Un número al INICIO de una especie sería un coeficiente, y se rechaza.
+   ========================================================== */
+
+const SIMBOLOS_ELEMENTOS = new Set((
+  'H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn ' +
+  'Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce ' +
+  'Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn ' +
+  'Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl ' +
+  'Mc Lv Ts Og').split(' '));
+
+/** Error de entrada con mensaje pensado para mostrarse al usuario. */
+class ErrorQuimico extends Error {
+  constructor(mensaje) { super(mensaje); this.name = 'ErrorQuimico'; }
+}
+
+/* ---------- Paso 1: normalizar y separar reactivos / productos ---------- */
+
+function normalizarTexto(texto) {
+  return texto
+    .replace(/[\u2212\u2013\u2014]/g, '-')   // distintos tipos de guion → "-"
+    .replace(/[\u2192\u27F6]/g, '->')        // flechas → ->
+    .replace(/=>/g, '->')
+    .replace(/\u00A0/g, ' ')
+    .trim();
+}
+
+function separarLados(texto) {
+  if (/<-+>|<=+>|\u21CC|\u2194|\u2190|<-/.test(texto)) {
+    throw new ErrorQuimico('Las flechas de equilibrio o hacia la izquierda no están admitidas. Usa una sola flecha «->».');
+  }
+  if (texto.includes('=')) {
+    throw new ErrorQuimico('Flecha incorrecta: usa «->» para separar reactivos y productos.');
+  }
+  const partes = texto.split('->');
+  if (partes.length === 1) throw new ErrorQuimico('No se encontró la flecha «->». Ejemplo: H2 + O2 -> H2O');
+  if (partes.length > 2)   throw new ErrorQuimico('La ecuación tiene más de una flecha. Escribe una sola reacción.');
+  if (partes[0].trim() === '') throw new ErrorQuimico('No hay reactivos a la izquierda de la flecha.');
+  if (partes[1].trim() === '') throw new ErrorQuimico('No hay productos a la derecha de la flecha.');
+  return partes;
+}
+
+/* ---------- Paso 2: dividir un lado en especies (el "+" es ambiguo) ---------- */
+
+/** ¿Este "+" es parte de una carga (Fe^2+, H+) y no un separador? */
+function esSignoDeCarga(lado, i, actual) {
+  if (/\^\d*$/.test(actual)) return true;              // Fe^2+  /  H^+
+  if (!/[A-Za-z0-9)]$/.test(actual)) return false;     // venía un espacio u otro símbolo
+  return /^\s*(\+|$)/.test(lado.slice(i + 1));         // H+  seguido de "+" o del fin
+}
+
+function dividirEspecies(lado) {
+  const especies = [];
+  let actual = '';
+  for (let i = 0; i < lado.length; i++) {
+    const c = lado[i];
+    if (c === '+' && !esSignoDeCarga(lado, i, actual)) {
+      especies.push(actual);
+      actual = '';
+    } else {
+      actual += c;
+    }
+  }
+  especies.push(actual);
+  return especies;
+}
+
+/* ---------- Paso 3: carga eléctrica de una especie ---------- */
+
+function separarCarga(texto) {
+  const trozos = texto.split('^');
+  if (trozos.length > 2) throw new ErrorQuimico(`«${texto}» tiene más de un «^». Solo se escribe una carga.`);
+
+  if (trozos.length === 2) {
+    const [formula, cargaTxt] = trozos;
+    if (formula === '') throw new ErrorQuimico(`A «${texto}» le falta la fórmula antes del «^».`);
+    let m = cargaTxt.match(/^(\d*)([+-])$/);        // 2+  3-  +  -
+    let magnitud, signo;
+    if (m) { magnitud = m[1] ? parseInt(m[1], 10) : 1; signo = m[2]; }
+    else if ((m = cargaTxt.match(/^([+-])(\d+)$/))) { magnitud = parseInt(m[2], 10); signo = m[1]; }  // +2  -3
+    if (!m || magnitud === 0) {
+      throw new ErrorQuimico(`La carga «^${cargaTxt}» de «${texto}» está mal escrita. Ejemplos válidos: ^+, ^-, ^2+, ^3-.`);
+    }
+    return { formula, carga: signo === '+' ? magnitud : -magnitud };
+  }
+
+  const ultimo = texto.slice(-1);                   // carga sin "^": solo H+ , OH- , Na+ , Cl-
+  if (ultimo === '+' || ultimo === '-') {
+    const formula = texto.slice(0, -1);
+    if (!/[A-Za-z)]$/.test(formula)) {
+      throw new ErrorQuimico(`Carga ambigua en «${texto}». Escribe la carga con «^»: por ejemplo Fe^2+ o SO4^2-.`);
+    }
+    return { formula, carga: ultimo === '+' ? 1 : -1 };
+  }
+  return { formula: texto, carga: 0 };
+}
+
+/* ---------- Paso 4: contar átomos de una fórmula ---------- */
+
+function contarAtomos(formula, original) {
+  const total = {};
+  let grupo = null;      // contenido del paréntesis abierto (solo un nivel)
+  let i = 0;
+
+  const sumar = (destino, simbolo, n) => { destino[simbolo] = (destino[simbolo] || 0) + n; };
+
+  const leerNumero = () => {                         // subíndice; si no hay, vale 1
+    const inicio = i;
+    while (i < formula.length && /\d/.test(formula[i])) i++;
+    if (i === inicio) return 1;
+    const n = parseInt(formula.slice(inicio, i), 10);
+    if (n === 0) throw new ErrorQuimico(`En «${original}» hay un subíndice igual a cero, lo que no es válido.`);
+    return n;
+  };
+
+  while (i < formula.length) {
+    const c = formula[i];
+    if (/[A-Z]/.test(c)) {
+      let simbolo = c; i++;
+      if (i < formula.length && /[a-z]/.test(formula[i])) { simbolo += formula[i]; i++; }
+      if (i < formula.length && /[a-z]/.test(formula[i])) {
+        throw new ErrorQuimico(`El símbolo «${simbolo}${formula[i]}…» en «${original}» no es válido: los símbolos tienen una o dos letras.`);
+      }
+      if (!SIMBOLOS_ELEMENTOS.has(simbolo)) {
+        throw new ErrorQuimico(`El símbolo «${simbolo}» (en «${original}») no corresponde a ningún elemento.`);
+      }
+      sumar(grupo || total, simbolo, leerNumero());
+    } else if (c === '(') {
+      if (grupo) throw new ErrorQuimico(`No se admiten paréntesis anidados («${original}»).`);
+      grupo = {}; i++;
+    } else if (c === ')') {
+      if (!grupo) throw new ErrorQuimico(`En «${original}» hay un «)» sin abrir.`);
+      if (Object.keys(grupo).length === 0) throw new ErrorQuimico(`En «${original}» hay un paréntesis vacío.`);
+      i++;
+      const multiplo = leerNumero();
+      for (const s in grupo) sumar(total, s, grupo[s] * multiplo);
+      grupo = null;
+    } else if (/\d/.test(c)) {
+      throw new ErrorQuimico(`En «${original}» hay un número sin elemento al que pertenezca.`);
+    } else if (/[a-z]/.test(c)) {
+      throw new ErrorQuimico(`Los símbolos de los elementos empiezan con mayúscula (revisa «${original}»).`);
+    } else {
+      throw new ErrorQuimico(`El carácter «${c}» no es válido en la fórmula «${original}».`);
+    }
+  }
+  if (grupo) throw new ErrorQuimico(`En «${original}» hay un paréntesis sin cerrar.`);
+  return total;
+}
+
+/* ---------- Paso 5: una especie completa ---------- */
+
+function interpretarEspecie(token) {
+  const texto = token.trim();
+  if (texto === '') throw new ErrorQuimico('Hay una especie vacía: revisa que no sobre ningún signo «+».');
+  if (/^\d/.test(texto)) {
+    throw new ErrorQuimico(`«${texto}» empieza con un número (coeficiente). Escribe la fórmula sin coeficientes: ChemBalance los calcula.`);
+  }
+  if (/[·.*]/.test(texto)) throw new ErrorQuimico(`Los hidratos («${texto}») no están admitidos en esta versión.`);
+  const raro = texto.match(/[^A-Za-z0-9()^+\-\s]/);      // primero el carácter, luego los espacios
+  if (raro) throw new ErrorQuimico(`El carácter «${raro[0]}» no es válido en «${texto}».`);
+  if (/\s/.test(texto)) throw new ErrorQuimico(`«${texto}» tiene espacios dentro de la fórmula.`);
+
+  const { formula, carga } = separarCarga(texto);
+  const elementos = contarAtomos(formula, texto);
+  return { texto, formula, elementos, carga };
+}
+
+/* ---------- Función principal ---------- */
+
+function interpretarEcuacion(textoCrudo) {
+  if (typeof textoCrudo !== 'string' || textoCrudo.trim() === '') {
+    throw new ErrorQuimico('El campo está vacío. Escribe una ecuación, por ejemplo: H2 + O2 -> H2O');
+  }
+  const [izquierda, derecha] = separarLados(normalizarTexto(textoCrudo));
+  return {
+    reactivos: dividirEspecies(izquierda).map(interpretarEspecie),
+    productos: dividirEspecies(derecha).map(interpretarEspecie)
+  };
+}
+
+/** HTML con subíndices y carga en superíndice, para mostrar en pantalla. */
+function formulaAHTML(especie) {
+  let html = especie.formula.replace(/(\d+)/g, '<sub>$1</sub>');
+  if (especie.carga !== 0) {
+    const magnitud = Math.abs(especie.carga);
+    html += `<sup>${magnitud > 1 ? magnitud : ''}${especie.carga > 0 ? '+' : '−'}</sup>`;
+  }
+  return html;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { interpretarEcuacion, interpretarEspecie, formulaAHTML, ErrorQuimico };
+}
+
+</script>
+  <script>
+/* ===== balanceador.js ===== */
+/* ==========================================================
+   ChemBalance · balanceador.js (ETAPA 4)
+   Balanceo tradicional por sistema de ecuaciones lineales.
+
+   Idea: si las especies tienen coeficientes x1..xn, la cantidad de cada
+   elemento debe ser igual a ambos lados:
+        (átomos en reactivos) - (átomos en productos) = 0
+   Eso es A·x = 0, con una fila por elemento (y una fila de carga si hay iones).
+   Se resuelve con eliminación de Gauss-Jordan usando fracciones exactas.
+   ========================================================== */
+
+// Solo para Node (pruebas); en el navegador los otros archivos ya son globales.
+if (typeof module !== 'undefined' && module.exports) {
+  Object.assign(globalThis, require('./fracciones.js'), require('./parser.js'));
+}
+
+/* ---------- Texto de ecuaciones (también lo usará redox.js) ---------- */
+
+/** Une términos {especie, coeficiente} en texto: "2H2 + O2". */
+function ladoATexto(terminos) {
+  return terminos.map(t => (t.coeficiente === 1 ? '' : t.coeficiente) + t.especie.texto).join(' + ');
+}
+function ladoAHTML(terminos) {
+  return terminos.map(t => (t.coeficiente === 1 ? '' : t.coeficiente) + formulaAHTML(t.especie)).join(' + ');
+}
+
+/* ---------- Pasos 1-3: elementos y matriz de átomos ---------- */
+
+const nombreVariable = i => (i < 26 ? String.fromCharCode(97 + i) : 'x' + (i + 1));
+
+/** Lista de elementos presentes, en orden de aparición. */
+function listarElementos(reactivos, productos) {
+  const vistos = [];
+  [...reactivos, ...productos].forEach(e => {
+    Object.keys(e.elementos).forEach(s => { if (!vistos.includes(s)) vistos.push(s); });
+  });
+  return vistos;
+}
+
+/** Un elemento que está solo en un lado hace imposible el balanceo. */
+function comprobarElementosEnAmbosLados(reactivos, productos, elementos) {
+  for (const el of elementos) {
+    const enR = reactivos.some(e => e.elementos[el]);
+    const enP = productos.some(e => e.elementos[el]);
+    if (enR !== enP) {
+      throw new ErrorQuimico(`El elemento ${el} aparece solo en los ${enR ? 'reactivos' : 'productos'}: la ecuación no se puede balancear.`);
+    }
+  }
+}
+
+/** Construye la matriz A (filas = elementos [+ carga], columnas = especies). */
+function construirMatriz(reactivos, productos, elementos, usaCarga) {
+  const especies = [...reactivos, ...productos];
+  const signo = i => (i < reactivos.length ? 1 : -1);          // reactivos +, productos −
+  const filas = elementos.map(el =>
+    especies.map((e, i) => new Fraccion(signo(i) * (e.elementos[el] || 0))));
+  if (usaCarga) filas.push(especies.map((e, i) => new Fraccion(signo(i) * e.carga)));
+  return filas;
+}
+
+/** Escribe cada fila como ecuación legible: «2a = 2c». */
+function describirEcuaciones(reactivos, productos, elementos, usaCarga) {
+  const n = reactivos.length;
+  const termino = (c, v) => (Math.abs(c) === 1 ? '' : Math.abs(c)) + v;
+  const unir = lista => {
+    if (lista.length === 0) return '0';
+    return lista.map((t, i) => (i === 0 ? (t.c < 0 ? '-' : '') : (t.c < 0 ? ' - ' : ' + ')) + termino(t.c, t.v)).join('');
+  };
+  const fila = (valor, etiqueta) => {
+    const izq = [], der = [];
+    [...reactivos, ...productos].forEach((e, i) => {
+      const c = valor(e);
+      if (c !== 0) (i < n ? izq : der).push({ c, v: nombreVariable(i) });
+    });
+    return `${etiqueta}: ${unir(izq)} = ${unir(der)}`;
+  };
+  const lineas = elementos.map(el => fila(e => e.elementos[el] || 0, el));
+  if (usaCarga) lineas.push(fila(e => e.carga, 'Carga'));
+  return lineas;
+}
+
+/* ---------- Paso 4: Gauss-Jordan con fracciones ---------- */
+
+/** Devuelve la matriz escalonada reducida y las columnas pivote. */
+function escalonarReducida(matriz) {
+  const M = matriz.map(fila => fila.slice());
+  const columnas = M[0].length;
+  const pivotes = [];
+  let fila = 0;
+  for (let col = 0; col < columnas && fila < M.length; col++) {
+    let p = fila;
+    while (p < M.length && M[p][col].esCero()) p++;
+    if (p === M.length) continue;                                // columna sin pivote
+    [M[fila], M[p]] = [M[p], M[fila]];
+    const pivote = M[fila][col];
+    M[fila] = M[fila].map(x => x.dividir(pivote));               // pivote = 1
+    for (let r = 0; r < M.length; r++) {                         // anular el resto de la columna
+      if (r === fila || M[r][col].esCero()) continue;
+      const factor = M[r][col];
+      M[r] = M[r].map((x, j) => x.restar(factor.multiplicar(M[fila][j])));
+    }
+    pivotes.push(col);
+    fila++;
+  }
+  return { reducida: M, pivotes };
+}
+
+/* ---------- Pasos 5-6: solución entera mínima ---------- */
+
+function resolverSistema(reducida, pivotes, columnas) {
+  const libres = [];
+  for (let j = 0; j < columnas; j++) if (!pivotes.includes(j)) libres.push(j);
+
+  if (libres.length === 0) {
+    throw new ErrorQuimico('La ecuación no tiene solución con las especies indicadas (solo existe la solución trivial: todos los coeficientes en cero). Revisa las fórmulas.');
+  }
+  if (libres.length > 1) {
+    throw new ErrorQuimico('La ecuación admite varias soluciones independientes (hay más de una reacción posible con estas especies). ChemBalance no elige una por ti: separa la ecuación en reacciones individuales.');
+  }
+
+  const libre = libres[0];
+  const fraccionaria = Array.from({ length: columnas }, () => new Fraccion(0));
+  fraccionaria[libre] = new Fraccion(1);                         // variable libre = 1
+  pivotes.forEach((col, fila) => { fraccionaria[col] = reducida[fila][libre].negar(); });
+
+  let factor = 1n;                                               // eliminar denominadores
+  fraccionaria.forEach(f => { factor = mcm(factor, f.den); });
+  const enteros = fraccionaria.map(f => f.num * (factor / f.den));
+
+  let divisor = 0n;                                              // menores enteros posibles
+  enteros.forEach(x => { divisor = mcd(divisor, x); });
+  const minimos = enteros.map(x => x / divisor);
+
+  return { libre, fraccionaria, factor, divisor, minimos };
+}
+
+/* ---------- Función principal ---------- */
+
+/** Recibe {reactivos, productos} del parser y devuelve la ecuación balanceada con sus pasos. */
+function balancearTradicional(ecuacion) {
+  const { reactivos, productos } = ecuacion;
+  const elementos = listarElementos(reactivos, productos);
+  comprobarElementosEnAmbosLados(reactivos, productos, elementos);
+
+  const usaCarga = [...reactivos, ...productos].some(e => e.carga !== 0);
+  const matriz = construirMatriz(reactivos, productos, elementos, usaCarga);
+  const { reducida, pivotes } = escalonarReducida(matriz);
+  const sol = resolverSistema(reducida, pivotes, reactivos.length + productos.length);
+
+  if (sol.minimos.some(x => x <= 0n)) {
+    throw new ErrorQuimico('El sistema no tiene ninguna solución con coeficientes positivos: la reacción, tal como está escrita, no es posible. Revisa en qué lado va cada especie.');
+  }
+  if (sol.minimos.some(x => x > BigInt(Number.MAX_SAFE_INTEGER))) {
+    throw new ErrorQuimico('Los coeficientes resultantes son demasiado grandes para este programa.');
+  }
+  const coeficientes = sol.minimos.map(Number);
+
+  // Autocomprobación: A·x debe dar cero exactamente.
+  const sumas = matriz.map(fila => fila.reduce((acc, f, j) => acc.sumar(f.multiplicar(new Fraccion(sol.minimos[j]))), new Fraccion(0)));
+  if (sumas.some(s => !s.esCero())) throw new Error('Error interno: la solución no satisface el sistema.');
+
+  const n = reactivos.length;
+  const terminosR = reactivos.map((e, i) => ({ especie: e, coeficiente: coeficientes[i] }));
+  const terminosP = productos.map((e, i) => ({ especie: e, coeficiente: coeficientes[n + i] }));
+
+  return {
+    reactivos: terminosR,
+    productos: terminosP,
+    ecuacionTexto: `${ladoATexto(terminosR)} -> ${ladoATexto(terminosP)}`,
+    ecuacionHTML: `${ladoAHTML(terminosR)} → ${ladoAHTML(terminosP)}`,
+    pasos: {
+      elementos,
+      usaCarga,
+      variables: [...reactivos, ...productos].map((e, i) => ({ nombre: nombreVariable(i), especie: e.texto })),
+      ecuaciones: describirEcuaciones(reactivos, productos, elementos, usaCarga),
+      matriz: matriz.map(f => f.map(x => x.comoTexto())),
+      matrizReducida: reducida.map(f => f.map(x => x.comoTexto())),
+      variableLibre: nombreVariable(sol.libre),
+      solucionFraccionaria: sol.fraccionaria.map(f => f.comoTexto()),
+      factorComun: sol.factor.toString(),
+      divisorFinal: sol.divisor.toString(),
+      coeficientes
+    }
+  };
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { balancearTradicional, ladoATexto, ladoAHTML, construirMatriz, escalonarReducida, resolverSistema };
+}
+
+</script>
+  <script>
+/* ===== redox.js ===== */
+/* ==========================================================
+   ChemBalance · redox.js (ETAPA 5: medio ácido · ETAPA 6: medio básico)
+   Método de semirreacciones:
+     1. números de oxidación   2. cambios (qué se oxida / reduce)
+     3. semirreacciones        4. balance (átomos, O con H2O, H con H+, carga con e-)
+     5. (medio básico) neutralizar H+ con OH-, formar H2O y cancelar agua
+     6. igualar electrones     7. sumar y cancelar   8. simplificar
+   ========================================================== */
+
+if (typeof module !== 'undefined' && module.exports) {
+  Object.assign(globalThis, require('./fracciones.js'), require('./parser.js'), require('./balanceador.js'));
+}
+
+/* ---------- Especies especiales ---------- */
+
+const claveEspecie = e => e.formula + '|' + e.carga;            // identidad química de una especie
+const AGUA = interpretarEspecie('H2O');
+const PROTON = interpretarEspecie('H+');
+const OH = interpretarEspecie('OH^-');
+const ELECTRON = { texto: 'e^-', formula: 'e', elementos: {}, carga: -1 };
+const CLAVES_MEDIO = new Set([claveEspecie(AGUA), claveEspecie(PROTON), claveEspecie(OH)]);
+const esMedio = e => CLAVES_MEDIO.has(claveEspecie(e));
+const formatoOx = f => (f.esPositiva() ? '+' : '') + f.comoTexto();
+
+/* ---------- Paso 1: números de oxidación ---------- */
+
+const OX_FIJOS = { F: -1, Li: 1, Na: 1, K: 1, Rb: 1, Cs: 1, Be: 2, Mg: 2, Ca: 2, Sr: 2, Ba: 2, Al: 3, Zn: 2, Ag: 1 };
+const ANION_TIPICO = { Cl: -1, Br: -1, I: -1, S: -2, Se: -2, Te: -2, N: -3, P: -3 };
+const ELECTRONEG = { Cl: 3.16, N: 3.04, Br: 2.96, I: 2.66, S: 2.58, Se: 2.55, P: 2.19, Te: 2.10 };
+
+/** Devuelve {valores: {El: Fraccion}, aviso, indeterminado}. Los valores son promedios por átomo. */
+function numerosOxidacion(especie) {
+  const els = Object.keys(especie.elementos);
+  const n = el => especie.elementos[el];
+  if (els.length === 1) {                                         // elemento libre o ion monoatómico
+    return { valores: { [els[0]]: new Fraccion(especie.carga, n(els[0])) }, aviso: null, indeterminado: null };
+  }
+  const fijos = {};
+  els.forEach(el => {
+    if (el in OX_FIJOS) fijos[el] = OX_FIJOS[el];
+    else if (el === 'H') fijos.H = 1;
+    else if (el === 'O') fijos.O = -2;
+  });
+  const suma = () => Object.keys(fijos).reduce((s, el) => s + fijos[el] * n(el), 0);
+  let desconocidos = els.filter(el => !(el in fijos));
+  let aviso = null;
+
+  if (desconocidos.length === 0 && suma() !== especie.carga) {    // peróxidos, superóxidos, hidruros
+    const liberar = els.includes('O') ? 'O' : (els.includes('H') ? 'H' : null);
+    if (liberar) { delete fijos[liberar]; desconocidos = [liberar]; }
+  } else if (desconocidos.length === 2) {                         // binario sin reglas fijas: electronegatividad
+    const candidatos = desconocidos.filter(el => el in ANION_TIPICO).sort((a, b) => ELECTRONEG[b] - ELECTRONEG[a]);
+    if (candidatos.length) {
+      fijos[candidatos[0]] = ANION_TIPICO[candidatos[0]];
+      desconocidos = desconocidos.filter(el => el !== candidatos[0]);
+      aviso = `En ${especie.texto}, ${candidatos[0]} se tomó como ${ANION_TIPICO[candidatos[0]]} por su electronegatividad (estimación).`;
+    }
+  }
+  if (desconocidos.length > 1 || (desconocidos.length === 0 && suma() !== especie.carga)) {
+    return { valores: null, aviso, indeterminado: desconocidos.length ? desconocidos : els };
+  }
+  const valores = {};
+  Object.keys(fijos).forEach(el => { valores[el] = new Fraccion(fijos[el]); });
+  if (desconocidos.length === 1) valores[desconocidos[0]] = new Fraccion(especie.carga - suma(), n(desconocidos[0]));
+  return { valores, aviso, indeterminado: null };
+}
+
+/* ---------- Pasos 2-3: cambios y semirreacciones ---------- */
+
+const soloHO = e => Object.keys(e.elementos).every(el => el === 'H' || el === 'O');
+
+/** Aristas reactivo→producto para cada elemento cuyo número de oxidación cambia. */
+function buscarCambios(reactivos, productos, ox) {
+  const aristas = [];
+  reactivos.forEach((r, i) => productos.forEach((p, j) => {
+    Object.keys(r.elementos).forEach(el => {
+      if (!p.elementos[el]) return;
+      if ((el === 'H' || el === 'O') && !(soloHO(r) && soloHO(p))) return;   // evita falsos cambios del O en oxoaniones
+      if (!ox.r[i].valores[el].igualA(ox.p[j].valores[el])) aristas.push({ r: i, p: j, el });
+    });
+  }));
+  return aristas;
+}
+
+/** Cada semirreacción tiene un reactivo y uno o varios productos. */
+function construirSemirreacciones(aristas) {
+  const semis = [];
+  const reactivosConCambio = [...new Set(aristas.map(a => a.r))];
+  reactivosConCambio.forEach(r => {
+    const propias = aristas.filter(a => a.r === r);
+    const prods = [...new Set(propias.map(a => a.p))];
+    const elsDe = p => propias.filter(a => a.p === p).map(a => a.el);
+    const hayCompartido = prods.some((p, i) => prods.slice(i + 1).some(q => elsDe(p).some(el => elsDe(q).includes(el))));
+    if (prods.length === 1 || !hayCompartido) {
+      semis.push({ r, prods });                                   // un solo reactivo → todos sus productos (ej. As2S3)
+    } else {
+      prods.forEach(p => semis.push({ r, prods: [p] }));          // mismo elemento a varios productos (dismutación)
+    }
+  });
+  return semis;
+}
+
+/* ---------- Paso 4: balance de una semirreacción en medio ácido ---------- */
+
+const contarEn = (lado, el) => lado.reduce((s, t) => s + t.coeficiente * (t.especie.elementos[el] || 0), 0);
+const cargaDe = lado => lado.reduce((s, t) => s + t.coeficiente * t.especie.carga, 0);
+function agregar(lado, especie, n) {                              // suma n unidades, fusionando si ya existe
+  const t = lado.find(x => claveEspecie(x.especie) === claveEspecie(especie));
+  if (t) t.coeficiente += n; else lado.push({ especie, coeficiente: n });
+}
+const semiATexto = h => `${ladoATexto(h.izq)} -> ${ladoATexto(h.der)}`;
+function quitar(lado, especie, n) {                               // resta n unidades; elimina el término si llega a 0
+  const i = lado.findIndex(x => claveEspecie(x.especie) === claveEspecie(especie));
+  lado[i].coeficiente -= n;
+  if (lado[i].coeficiente === 0) lado.splice(i, 1);
+}
+const coefDe = (lado, especie) => (lado.find(x => claveEspecie(x.especie) === claveEspecie(especie)) || { coeficiente: 0 }).coeficiente;
+
+/** Los electrones se escriben siempre al final de su lado. */
+function electronesAlFinal(...lados) {
+  lados.forEach(l => { const i = l.findIndex(t => claveEspecie(t.especie) === claveEspecie(ELECTRON)); if (i >= 0 && i < l.length - 1) l.push(l.splice(i, 1)[0]); });
+}
+
+function comprobarSemirreaccion(izq, der) {
+  const elementos = [...new Set([...izq, ...der].flatMap(t => Object.keys(t.especie.elementos)))];
+  if (elementos.some(el => contarEn(izq, el) !== contarEn(der, el)) || cargaDe(izq) !== cargaDe(der)) {
+    throw new Error('Error interno: la semirreacción quedó desbalanceada.');
+  }
+}
+
+/** MEDIO BÁSICO: por cada H+ se añade un OH- a ambos lados, H+ + OH- → H2O, y se cancela el agua repetida. */
+function neutralizar(izq, der, pasos) {
+  let hubo = false;
+  [izq, der].forEach(lado => {
+    const n = coefDe(lado, PROTON);
+    if (n === 0) return;
+    hubo = true;
+    agregar(izq, OH, n); agregar(der, OH, n);
+    pasos.push(`Medio básico: se añaden ${n} OH- a ambos lados para neutralizar los ${n} H+ → ${semiATexto({ izq, der })}`);
+    quitar(lado, PROTON, n); quitar(lado, OH, n); agregar(lado, AGUA, n);
+    pasos.push(`${n} H+ + ${n} OH- forman ${n} H2O → ${semiATexto({ izq, der })}`);
+  });
+  if (!hubo) { pasos.push('Medio básico: no hay H+ que neutralizar.'); return; }
+  const comun = Math.min(coefDe(izq, AGUA), coefDe(der, AGUA));
+  if (comun > 0) {
+    quitar(izq, AGUA, comun); quitar(der, AGUA, comun);
+    pasos.push(`Se cancelan ${comun} H2O que aparecen en ambos lados → ${semiATexto({ izq, der })}`);
+  }
+  electronesAlFinal(izq, der);
+}
+
+function balancearSemirreaccion(r, prods, medio, cambiantes) {
+  const todas = [r, ...prods];
+  const nombre = `${r.texto} → ${prods.map(p => p.texto).join(' + ')}`;
+  const pasos = [];
+
+  // a) elementos distintos de H y O (si no hay, se ancla en O o en H)
+  let anclas = [...new Set(todas.flatMap(e => Object.keys(e.elementos)))].filter(el => el !== 'H' && el !== 'O');
+  if (anclas.length === 0) anclas = cambiantes.length ? cambiantes : (todas.some(e => e.elementos.O) ? ['O'] : ['H']);
+  let sol;
+  try {
+    const M = construirMatriz([r], prods, anclas, false);
+    const { reducida, pivotes } = escalonarReducida(M);
+    sol = resolverSistema(reducida, pivotes, todas.length);
+  } catch (e) {
+    if (e instanceof ErrorQuimico) throw new ErrorQuimico(`No se pudo balancear la semirreacción «${nombre}»: los elementos (${anclas.join(', ')}) no se corresponden entre sus lados.`);
+    throw e;
+  }
+  if (sol.minimos.some(x => x <= 0n)) throw new ErrorQuimico(`No se pudo balancear la semirreacción «${nombre}».`);
+  const coef = sol.minimos.map(Number);
+  const izq = [{ especie: r, coeficiente: coef[0] }];
+  const der = prods.map((p, i) => ({ especie: p, coeficiente: coef[i + 1] }));
+  pasos.push(`Elementos distintos de H y O (${anclas.join(', ')}): ${semiATexto({ izq, der })}`);
+
+  // b) oxígeno con H2O
+  const dO = contarEn(izq, 'O') - contarEn(der, 'O');
+  if (dO !== 0) { agregar(dO > 0 ? der : izq, AGUA, Math.abs(dO)); pasos.push(`Oxígeno: se añaden ${Math.abs(dO)} H2O → ${semiATexto({ izq, der })}`); }
+  else pasos.push('Oxígeno: ya está balanceado.');
+
+  // c) hidrógeno con H+
+  const dH = contarEn(izq, 'H') - contarEn(der, 'H');
+  if (dH !== 0) { agregar(dH > 0 ? der : izq, PROTON, Math.abs(dH)); pasos.push(`Hidrógeno: se añaden ${Math.abs(dH)} H+ → ${semiATexto({ izq, der })}`); }
+  else pasos.push('Hidrógeno: ya está balanceado.');
+
+  // d) carga con electrones
+  const qIzq = cargaDe(izq), qDer = cargaDe(der), dQ = qIzq - qDer;
+  if (dQ === 0) throw new ErrorQuimico(`La semirreacción «${nombre}» no transfiere electrones.`);
+  agregar(dQ > 0 ? izq : der, ELECTRON, Math.abs(dQ));
+  pasos.push(`Carga: ${qIzq} a la izquierda y ${qDer} a la derecha; se añaden ${Math.abs(dQ)} e- a la ${dQ > 0 ? 'izquierda' : 'derecha'} → ${semiATexto({ izq, der })}`);
+
+  comprobarSemirreaccion(izq, der);                               // comprobación interna (medio ácido)
+  if (medio === 'basico') { neutralizar(izq, der, pasos); comprobarSemirreaccion(izq, der); }
+  return { izq, der, electrones: Math.abs(dQ), tipo: dQ > 0 ? 'reduccion' : 'oxidacion', coefOriginales: coef, pasos };
+}
+
+/* ---------- Pasos 5-7: igualar electrones, sumar, cancelar, simplificar ---------- */
+
+function sumarSemirreacciones(semis) {
+  const ox = semis.filter(h => h.tipo === 'oxidacion');
+  const red = semis.filter(h => h.tipo === 'reduccion');
+  if (ox.length === 0 || red.length === 0) {
+    throw new ErrorQuimico('No hay una pareja oxidación-reducción: se detectó solo ' + (ox.length ? 'oxidación' : 'reducción') + '. Revisa que estén todas las especies.');
+  }
+  if (ox.length > 1 || red.length > 1) {
+    throw new ErrorQuimico(`Se detectaron ${ox.length} semirreacciones de oxidación y ${red.length} de reducción. Con más de una de cada tipo los coeficientes no quedan determinados de forma única; separa la ecuación en reacciones individuales.`);
+  }
+  const L = Number(mcm(ox[0].electrones, red[0].electrones));
+  ox[0].multiplicador = L / ox[0].electrones;
+  red[0].multiplicador = L / red[0].electrones;
+
+  const neto = new Map();                                         // clave → {especie, valor}; reactivos negativos
+  const acumular = (lado, signo, m) => lado.forEach(t => {
+    const k = claveEspecie(t.especie);
+    if (!neto.has(k)) neto.set(k, { especie: t.especie, valor: 0 });
+    neto.get(k).valor += signo * m * t.coeficiente;
+  });
+  semis.forEach(h => { acumular(h.izq, -1, h.multiplicador); acumular(h.der, 1, h.multiplicador); });
+  const electrones = neto.get(claveEspecie(ELECTRON)).valor;
+  if (electrones !== 0) throw new Error('Error interno: los electrones no se cancelan.');
+  neto.delete(claveEspecie(ELECTRON));
+  return { neto, electronesTransferidos: L, ox: ox[0], red: red[0] };
+}
+
+/* ---------- Función principal ---------- */
+
+function resolverConEspecies(reactivos, productos, ignoradas, medio) {
+  const pasos = [];
+  const ox = { r: reactivos.map(numerosOxidacion), p: productos.map(numerosOxidacion) };
+  [[reactivos, ox.r], [productos, ox.p]].forEach(([lista, nums]) => nums.forEach((o, i) => {
+    if (o.indeterminado) throw new ErrorQuimico(`No se pudo determinar el número de oxidación de ${o.indeterminado.join(', ')} en «${lista[i].texto}». Esta versión no cubre ese caso.`);
+  }));
+  pasos.push({ titulo: 'Números de oxidación', lineas: [...reactivos.map((e, i) => [e, ox.r[i]]), ...productos.map((e, i) => [e, ox.p[i]])]
+    .map(([e, o]) => `${e.texto}: ` + Object.keys(o.valores).map(el => `${el} ${formatoOx(o.valores[el])}`).join(', ')) });
+  const avisos = [...ox.r, ...ox.p].map(o => o.aviso).filter(Boolean);
+
+  const aristas = buscarCambios(reactivos, productos, ox);
+  if (aristas.length === 0) throw new ErrorQuimico('No se detectó ningún cambio en los números de oxidación: esta no es una reacción REDOX (o faltan especies).');
+  const conCambioR = new Set(aristas.map(a => a.r)), conCambioP = new Set(aristas.map(a => a.p));
+  const sueltas = [...reactivos.filter((_, i) => !conCambioR.has(i)), ...productos.filter((_, i) => !conCambioP.has(i))];
+  if (sueltas.length) {
+    throw new ErrorQuimico(`${sueltas.map(e => '«' + e.texto + '»').join(', ')} no participa(n) en ningún cambio de oxidación. Esta versión trabaja con ecuaciones iónicas netas, sin iones espectadores, y no admite que falte el producto de una especie que se oxida o reduce (por ejemplo, escribe H2O2 -> H2O si el peróxido se reduce).`);
+  }
+
+  const tabla = aristas.map(a => {
+    const ini = ox.r[a.r].valores[a.el], fin = ox.p[a.p].valores[a.el];
+    return { elemento: a.el, especieInicial: reactivos[a.r].texto, inicial: formatoOx(ini), especieFinal: productos[a.p].texto, final: formatoOx(fin),
+             proceso: fin.restar(ini).esPositiva() ? 'Oxidación' : 'Reducción' };
+  });
+
+  const semis = construirSemirreacciones(aristas).map(s => {
+    const cambiantes = [...new Set(aristas.filter(a => a.r === s.r && s.prods.includes(a.p)).map(a => a.el))];
+    const h = balancearSemirreaccion(reactivos[s.r], s.prods.map(j => productos[j]), medio, cambiantes);
+    h.reactante = reactivos[s.r];
+    return h;
+  });
+  const suma = sumarSemirreacciones(semis);
+
+  pasos.push({ titulo: 'Semirreacciones balanceadas',
+    lineas: semis.flatMap(h => [`${h.tipo === 'oxidacion' ? 'Oxidación' : 'Reducción'} de ${h.reactante.texto}:`, ...h.pasos, `Resultado: ${semiATexto(h)}  (${h.electrones} e-)`]) });
+  pasos.push({ titulo: 'Igualación de electrones',
+    lineas: [`Mínimo común múltiplo de ${suma.ox.electrones} y ${suma.red.electrones}: ${suma.electronesTransferidos} e-.`,
+             `Oxidación × ${suma.ox.multiplicador}; reducción × ${suma.red.multiplicador}.`] });
+
+  // Ordenar: especies de la entrada en su orden; luego las añadidas (H+, H2O)
+  const orden = new Map();
+  [...reactivos, ...productos].forEach((e, i) => orden.set(claveEspecie(e), i));
+  orden.set(claveEspecie(PROTON), 1000); orden.set(claveEspecie(AGUA), 1001); orden.set(claveEspecie(OH), 1002);
+  const entrada = new Map([...reactivos.map(e => [claveEspecie(e), 'r']), ...productos.map(e => [claveEspecie(e), 'p'])]);
+
+  let divisor = 0n;
+  suma.neto.forEach(t => { divisor = mcd(divisor, t.valor); });
+  const izq = [], der = [];
+  [...suma.neto.entries()].forEach(([k, t]) => {
+    const lado = t.valor < 0 ? 'r' : t.valor > 0 ? 'p' : null;
+    if (entrada.has(k) && !CLAVES_MEDIO.has(k) && entrada.get(k) !== lado) {
+      throw new ErrorQuimico(`La especie «${t.especie.texto}» debería estar del otro lado de la flecha: la reacción, tal como está escrita, no es posible.`);
+    }
+    if (lado) (lado === 'r' ? izq : der).push({ especie: t.especie, coeficiente: Number(BigInt(Math.abs(t.valor)) / divisor), k });
+  });
+  entrada.forEach((_, k) => { if (!CLAVES_MEDIO.has(k) && (!suma.neto.has(k) || suma.neto.get(k).valor === 0)) throw new ErrorQuimico('Una especie de la entrada se canceló por completo: revisa la ecuación.'); });
+  [izq, der].forEach(l => l.sort((a, b) => orden.get(a.k) - orden.get(b.k)));
+
+  pasos.push({ titulo: 'Suma y cancelación',
+    lineas: ['Se suman las semirreacciones multiplicadas y se cancelan los electrones y las especies que aparecen en ambos lados (H+, H2O).',
+             `Coeficientes divididos por su máximo común divisor: ${divisor}.`] });
+
+  return {
+    izq, der, pasos, tabla, avisos, ignoradas,
+    semirreacciones: semis.map(h => ({ tipo: h.tipo, ecuacionTexto: semiATexto(h), electrones: h.electrones, multiplicador: h.multiplicador, reactante: h.reactante.texto })),
+    oxidante: suma.red.reactante.texto, reductor: suma.ox.reactante.texto,
+    electronesTransferidos: suma.electronesTransferidos
+  };
+}
+
+/** Balancea una reacción REDOX. medio: 'acido' o 'basico'. */
+function balancearRedox(ecuacion, medio) {
+  if (medio !== 'acido' && medio !== 'basico') throw new ErrorQuimico('Indica el medio de reacción: ácido o básico.');
+
+  const { reactivos, productos } = ecuacion;
+  const medioEscrito = [...reactivos, ...productos].filter(esMedio);
+  const intentos = [];
+  if (medioEscrito.length) intentos.push({ r: reactivos.filter(e => !esMedio(e)), p: productos.filter(e => !esMedio(e)), ignoradas: medioEscrito.map(e => e.texto) });
+  intentos.push({ r: reactivos, p: productos, ignoradas: [] });   // si H+/H2O sí participan (Zn + H+ → H2)
+
+  let resultado = null, ultimoError = null;
+  for (const it of intentos) {
+    if (!it.r.length || !it.p.length) continue;
+    try { resultado = resolverConEspecies(it.r, it.p, it.ignoradas, medio); break; }
+    catch (e) { if (!(e instanceof ErrorQuimico)) throw e; ultimoError = e; }
+  }
+  if (!resultado) throw ultimoError;
+
+  if (resultado.ignoradas.length) {
+    resultado.pasos.unshift({ titulo: 'Especies del medio', lineas: [`Se ignoraron ${resultado.ignoradas.join(', ')} de la entrada: ChemBalance calcula H+ y H2O por su cuenta.`] });
+  }
+  if (medio === 'basico' && [...resultado.izq, ...resultado.der].some(t => claveEspecie(t.especie) === claveEspecie(PROTON))) {
+    throw new Error('Error interno: quedó H+ en un resultado de medio básico.');
+  }
+  const terminosR = resultado.izq.map(({ especie, coeficiente }) => ({ especie, coeficiente }));
+  const terminosP = resultado.der.map(({ especie, coeficiente }) => ({ especie, coeficiente }));
+  return {
+    medio, reactivos: terminosR, productos: terminosP,
+    ecuacionTexto: `${ladoATexto(terminosR)} -> ${ladoATexto(terminosP)}`,
+    ecuacionHTML: `${ladoAHTML(terminosR)} → ${ladoAHTML(terminosP)}`,
+    tabla: resultado.tabla, oxidante: resultado.oxidante, reductor: resultado.reductor,
+    electronesTransferidos: resultado.electronesTransferidos,
+    semirreacciones: resultado.semirreacciones, avisos: resultado.avisos, pasos: resultado.pasos
+  };
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { balancearRedox, numerosOxidacion, formatoOx };
+}
+
+</script>
+  <script>
+/* ===== verificador.js ===== */
+/* ==========================================================
+   ChemBalance · verificador.js (ETAPA 7)
+   Comprueba un resultado SIN fiarse de cómo se calculó:
+     - vuelve a leer cada fórmula desde su texto (no usa los objetos del balanceador),
+     - recuenta átomos y cargas,
+     - exige coeficientes enteros, positivos y mínimos,
+     - en REDOX, exige que los electrones cedidos y aceptados coincidan
+       y que no queden electrones en la ecuación global.
+   Si algo falla, `valida` es false y la interfaz NO debe presentarla como balanceada.
+   ========================================================== */
+
+if (typeof module !== 'undefined' && module.exports) {
+  Object.assign(globalThis, require('./parser.js'));
+}
+
+/**
+ * @param resultado  { reactivos: [{especie, coeficiente}], productos: [...], semirreacciones?: [...] }
+ * @param tipo       'tradicional' | 'redox'
+ */
+function verificarBalanceo(resultado, tipo) {
+  const errores = [];
+  const ESTADO = ok => (ok ? 'Correcto' : 'Error');
+  const esElectron = texto => texto === 'e^-' || texto === 'e-';
+
+  // Relee las fórmulas desde el texto de cada especie.
+  const releer = terminos => terminos.map(t => ({
+    coeficiente: t.coeficiente,
+    electron: esElectron(t.especie.texto),
+    especie: esElectron(t.especie.texto) ? { texto: 'e^-', elementos: {}, carga: -1 } : interpretarEspecie(t.especie.texto)
+  }));
+  const reactivos = releer(resultado.reactivos);
+  const productos = releer(resultado.productos);
+
+  const contar = terminos => {
+    const atomos = {};
+    let carga = 0;
+    terminos.forEach(({ especie, coeficiente }) => {
+      Object.keys(especie.elementos).forEach(el => { atomos[el] = (atomos[el] || 0) + coeficiente * especie.elementos[el]; });
+      carga += coeficiente * especie.carga;
+    });
+    return { atomos, carga };
+  };
+  const r = contar(reactivos), p = contar(productos);
+
+  // 1) Átomos por elemento
+  const elementos = [...new Set([...Object.keys(r.atomos), ...Object.keys(p.atomos)])];
+  const atomos = elementos.map(el => {
+    const a = r.atomos[el] || 0, b = p.atomos[el] || 0;
+    if (a !== b) errores.push(`El elemento ${el} tiene ${a} átomos en los reactivos y ${b} en los productos.`);
+    return { elemento: el, reactivos: a, productos: b, ok: a === b, estado: ESTADO(a === b) };
+  });
+
+  // 2) Carga eléctrica (en unidades de carga elemental, e)
+  const cargaOk = r.carga === p.carga;
+  if (!cargaOk) errores.push(`La carga total es ${r.carga} e en los reactivos y ${p.carga} e en los productos.`);
+  const cargas = { reactivos: r.carga, productos: p.carga, ok: cargaOk, estado: ESTADO(cargaOk) };
+  const mostrarCargas = tipo === 'redox' || [...reactivos, ...productos].some(t => t.especie.carga !== 0);
+
+  // 3) Coeficientes: enteros, positivos y mínimos
+  const todos = [...reactivos, ...productos].map(t => t.coeficiente);
+  const enteros = todos.every(c => Number.isInteger(c));
+  const positivos = todos.every(c => Number.isFinite(c) && c > 0);
+  const gcd = (a, b) => (b === 0 ? Math.abs(a) : gcd(b, a % b));
+  const divisor = enteros ? todos.reduce((g, c) => gcd(g, c), 0) : null;
+  const minimos = enteros && positivos && divisor === 1;
+  if (!enteros) errores.push('Hay coeficientes que no son números enteros.');
+  if (!positivos) errores.push('Hay coeficientes que no son positivos.');
+  if (enteros && positivos && !minimos) errores.push(`Los coeficientes no son los menores posibles (tienen divisor común ${divisor}).`);
+  const coeficientes = { enteros, positivos, minimos, ok: enteros && positivos && minimos };
+
+  // 4) Electrones (solo REDOX)
+  let electrones = null;
+  if (tipo === 'redox') {
+    const semis = resultado.semirreacciones || [];
+    const suma = tipoSemi => semis.filter(h => h.tipo === tipoSemi).reduce((s, h) => s + h.multiplicador * h.electrones, 0);
+    const perdidos = suma('oxidacion'), ganados = suma('reduccion');
+    const sinElectronesEnGlobal = ![...reactivos, ...productos].some(t => t.electron);
+    const ok = semis.length > 0 && perdidos > 0 && perdidos === ganados && sinElectronesEnGlobal;
+    if (semis.length === 0) errores.push('No hay semirreacciones con las que comprobar los electrones.');
+    else if (perdidos !== ganados) errores.push(`Los electrones cedidos (${perdidos}) y aceptados (${ganados}) no coinciden.`);
+    if (!sinElectronesEnGlobal) errores.push('Quedaron electrones en la ecuación global: no se cancelaron.');
+    electrones = { perdidos, ganados, sinElectronesEnGlobal, ok, estado: ESTADO(ok) };
+  }
+
+  const valida = errores.length === 0;
+  return {
+    valida, atomos, cargas, mostrarCargas, coeficientes, electrones, errores,
+    resumen: valida
+      ? 'Verificación superada: átomos, cargas' + (tipo === 'redox' ? ', electrones' : '') + ' y coeficientes son correctos.'
+      : 'La ecuación NO supera la verificación, por lo que no se presenta como balanceada.'
+  };
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { verificarBalanceo };
+}
+
+</script>
+
+  <script>
+/* ===== script.js ===== */
+/* ==========================================================
+   ChemBalance · script.js (ETAPA 8)
+   Conecta la interfaz con los módulos:
+     texto → parser → balanceador / redox → verificador → pantalla
+   Regla de oro: si la verificación falla, NO se muestra una ecuación balanceada.
+   ========================================================== */
+
+if (typeof module !== 'undefined' && module.exports) {
+  Object.assign(globalThis, require('./fracciones.js'), require('./parser.js'), require('./balanceador.js'),
+                require('./redox.js'), require('./verificador.js'));
+}
+
+/* ==========================================================
+   PARTE 1 · Lógica sin DOM (se puede probar con Node)
+   ========================================================== */
+
+/** Interpreta, balancea y verifica. Lanza ErrorQuimico si la entrada o el balanceo no son válidos. */
+function balancearEcuacion(texto, tipo, medio) {
+  const ecuacion = interpretarEcuacion(texto);
+  const resultado = tipo === 'redox' ? balancearRedox(ecuacion, medio) : balancearTradicional(ecuacion);
+  const verificacion = verificarBalanceo(resultado, tipo);
+  return { tipo, medio, ecuacion, resultado, verificacion };
+}
+
+function escaparHTML(texto) {
+  return String(texto).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function signoCarga(c) { return (c > 0 ? '+' : '−') + Math.abs(c); }
+
+/** Bloque de procedimiento: título y lista (o texto preformateado). */
+function htmlPaso(titulo, contenido, preformateado) {
+  const cuerpo = preformateado
+    ? `<pre>${escaparHTML(contenido)}</pre>`
+    : '<ul>' + contenido.map(l => (/:$/.test(l)
+        ? `<li class="subtitulo"><strong>${escaparHTML(l)}</strong></li>`
+        : `<li>${escaparHTML(l)}</li>`)).join('') + '</ul>';
+  return `<div class="paso"><h3>${escaparHTML(titulo)}</h3>${cuerpo}</div>`;
+}
+
+/** Matriz en texto alineado, con etiquetas de fila y de columna. */
+function matrizATexto(filas, etiquetas, columnas) {
+  const ancho = Math.max(2, ...filas.flat().map(x => x.length), ...columnas.map(c => c.length)) + 1;
+  const ajustar = t => String(t).padStart(ancho);
+  const margen = Math.max(...etiquetas.map(e => e.length));
+  return [' '.repeat(margen + 2) + columnas.map(ajustar).join(''),
+          ...filas.map((f, i) => etiquetas[i].padEnd(margen) + ' |' + f.map(ajustar).join(''))].join('\n');
+}
+
+function htmlProcedimientoTradicional(modelo) {
+  const { ecuacion, resultado: r } = modelo;
+  const p = r.pasos;
+  const especies = [...ecuacion.reactivos, ...ecuacion.productos];
+  const etiquetas = p.usaCarga ? [...p.elementos, 'Carga'] : p.elementos;
+  const columnas = p.variables.map(v => v.nombre);
+
+  return [
+    htmlPaso('1. Reactivos, productos y elementos', [
+      `Reactivos: ${ecuacion.reactivos.map(e => e.texto).join(', ')}`,
+      `Productos: ${ecuacion.productos.map(e => e.texto).join(', ')}`,
+      `Elementos identificados: ${p.elementos.join(', ')}`]),
+    htmlPaso('2. Átomos de cada especie antes de balancear', especies.map(e =>
+      `${e.texto}: ` + Object.keys(e.elementos).map(el => `${e.elementos[el]} ${el}`).join(', ') + (e.carga ? `; carga ${signoCarga(e.carga)} e` : ''))),
+    htmlPaso('3. Coeficientes desconocidos', p.variables.map(v => `${v.nombre} = coeficiente de ${v.especie}`)),
+    htmlPaso('4. Sistema de ecuaciones lineales', [
+      'Para cada elemento: átomos en reactivos = átomos en productos.',
+      ...(p.usaCarga ? ['Como hay iones, se añade la ecuación de carga (en unidades de e).'] : []),
+      ...p.ecuaciones]),
+    htmlPaso('5. Matriz del sistema (reactivos con signo +, productos con signo −)', matrizATexto(p.matriz, etiquetas, columnas), true),
+    htmlPaso('6. Matriz reducida (eliminación de Gauss-Jordan con fracciones)', matrizATexto(p.matrizReducida, etiquetas, columnas), true),
+    htmlPaso('7. Solución', [
+      `Variable libre: ${p.variableLibre} = 1`,
+      ...p.variables.map((v, i) => `${v.nombre} = ${p.solucionFraccionaria[i]}`),
+      `Mínimo común múltiplo de los denominadores: ${p.factorComun} (se multiplica toda la solución por ese valor)`,
+      `Máximo común divisor de los enteros resultantes: ${p.divisorFinal} (se divide para obtener los menores enteros)`,
+      'Coeficientes finales: ' + p.variables.map((v, i) => `${v.nombre} = ${p.coeficientes[i]}`).join(', ')]),
+    htmlPaso('8. Ecuación balanceada', [r.ecuacionTexto])
+  ].join('');
+}
+
+function htmlProcedimientoRedox(modelo) {
+  const r = modelo.resultado;
+  const partes = [htmlPaso('Medio de reacción', [modelo.medio === 'acido' ? 'Medio ácido (se balancea con H2O y H+).' : 'Medio básico (se balancea como ácido y luego se neutraliza con OH-).'])];
+  r.pasos.forEach(paso => partes.push(htmlPaso(paso.titulo, paso.lineas)));
+  partes.push(htmlPaso('Semirreacciones multiplicadas', [
+    ...r.semirreacciones.map(h => `${h.multiplicador} × (${h.ecuacionTexto})   [${h.tipo === 'oxidacion' ? 'oxidación' : 'reducción'}, ${h.multiplicador * h.electrones} e-]`),
+    `Electrones transferidos: ${r.electronesTransferidos} e-`]));
+  if (r.avisos.length) partes.push(htmlPaso('Avisos', r.avisos));
+  partes.push(htmlPaso('Ecuación balanceada', [r.ecuacionTexto]));
+  return partes.join('');
+}
+
+function htmlFilasOxidacion(tabla) {
+  return tabla.map(f => `<tr><td>${escaparHTML(f.elemento)} (${escaparHTML(f.especieInicial)} → ${escaparHTML(f.especieFinal)})</td>` +
+    `<td>${escaparHTML(f.inicial)}</td><td>${escaparHTML(f.final)}</td><td>${escaparHTML(f.proceso)}</td></tr>`).join('');
+}
+
+function htmlFilasAtomos(atomos) {
+  return atomos.map(f => `<tr><td>${escaparHTML(f.elemento)}</td><td>${f.reactivos}</td><td>${f.productos}</td>` +
+    `<td><span class="${f.ok ? 'estado-ok' : 'estado-error'}">${f.estado}</span></td></tr>`).join('');
+}
+
+function htmlFilaCargas(c) {
+  return `<tr><td>${c.reactivos} e</td><td>${c.productos} e</td><td><span class="${c.ok ? 'estado-ok' : 'estado-error'}">${c.estado}</span></td></tr>`;
+}
+
+/** Lista de comprobaciones: [{ok, texto}]. */
+function listaComprobaciones(v) {
+  const l = [
+    { ok: v.atomos.every(f => f.ok), texto: 'Cada elemento tiene los mismos átomos en reactivos y productos.' },
+    { ok: v.cargas.ok, texto: `La carga total es igual a ambos lados (${v.cargas.reactivos} e y ${v.cargas.productos} e).` },
+    { ok: v.coeficientes.ok, texto: 'Los coeficientes son enteros, positivos y mínimos.' }
+  ];
+  if (v.electrones) l.push({ ok: v.electrones.ok, texto: `Los electrones se cancelan: se ceden ${v.electrones.perdidos} y se aceptan ${v.electrones.ganados}; no quedan en la ecuación global.` });
+  return l;
+}
+
+/* ==========================================================
+   PARTE 2 · Interfaz (DOM)
+   ========================================================== */
+
+const porId = id => document.getElementById(id);
+const MARCADOR_RESULTADO = 'Aún no hay resultado. Escribe una ecuación y pulsa «Balancear».';
+const MARCADOR_PROCEDIMIENTO = '<p>El procedimiento aparecerá aquí después de balancear.</p>';
+const MARCADOR_VERIFICACION = 'La verificación se ejecuta automáticamente después de balancear.';
+
+function mostrarError(mensaje) {
+  const caja = porId('mensaje-error');
+  caja.textContent = mensaje;                 // textContent: nunca interpreta HTML del usuario
+  caja.hidden = false;
+  if (caja.scrollIntoView) caja.scrollIntoView({ block: 'nearest' });
+}
+
+function ocultarError() {
+  const caja = porId('mensaje-error');
+  caja.textContent = '';
+  caja.hidden = true;
+}
+
+/** Deja resultado, procedimiento y verificación en su estado inicial. */
+function reiniciarSalidas() {
+  ocultarError();
+  porId('resultado-ecuacion').textContent = MARCADOR_RESULTADO;
+  porId('resultado-ecuacion').classList.add('vacio');
+  porId('procedimiento-contenido').innerHTML = MARCADOR_PROCEDIMIENTO;
+  porId('bloque-redox').hidden = true;
+  document.querySelector('#tabla-oxidacion tbody').innerHTML = '';
+  porId('agentes-redox').textContent = '';
+  porId('estado-verificacion').textContent = MARCADOR_VERIFICACION;
+  porId('estado-verificacion').classList.remove('ok', 'error');
+  porId('comprobaciones').innerHTML = '';
+  document.querySelector('#tabla-atomos tbody').innerHTML = '';
+  document.querySelector('#tabla-cargas tbody').innerHTML = '';
+  porId('bloque-cargas').hidden = true;
+}
+
+function pintarVerificacion(v) {
+  const estado = porId('estado-verificacion');
+  estado.textContent = v.resumen;
+  estado.classList.remove('ok', 'error');
+  estado.classList.add(v.valida ? 'ok' : 'error');
+  porId('comprobaciones').innerHTML = listaComprobaciones(v)
+    .map(c => `<li class="${c.ok ? 'ok' : 'error'}">${escaparHTML(c.texto)}</li>`).join('');
+  document.querySelector('#tabla-atomos tbody').innerHTML = htmlFilasAtomos(v.atomos);
+  porId('bloque-cargas').hidden = !v.mostrarCargas;
+  document.querySelector('#tabla-cargas tbody').innerHTML = v.mostrarCargas ? htmlFilaCargas(v.cargas) : '';
+}
+
+function pintarResultado(modelo) {
+  const r = modelo.resultado;
+  const ecuacion = porId('resultado-ecuacion');
+  ecuacion.innerHTML = r.ecuacionHTML;        // generado a partir de fórmulas ya validadas
+  ecuacion.classList.remove('vacio');
+
+  if (modelo.tipo === 'redox') {
+    porId('procedimiento-contenido').innerHTML = htmlProcedimientoRedox(modelo);
+    document.querySelector('#tabla-oxidacion tbody').innerHTML = htmlFilasOxidacion(r.tabla);
+    porId('agentes-redox').textContent =
+      `Agente oxidante: ${r.oxidante} (se reduce: acepta electrones). ` +
+      `Agente reductor: ${r.reductor} (se oxida: cede electrones). ` +
+      `Electrones transferidos: ${r.electronesTransferidos} e-.`;
+    porId('bloque-redox').hidden = false;
+  } else {
+    porId('procedimiento-contenido').innerHTML = htmlProcedimientoTradicional(modelo);
+  }
+}
+
+function renderizar(modelo) {
+  pintarVerificacion(modelo.verificacion);
+  if (!modelo.verificacion.valida) {
+    mostrarError('La ecuación obtenida no superó la verificación automática, por eso no se presenta como balanceada. ' +
+                 modelo.verificacion.errores.join(' '));
+    return;
+  }
+  pintarResultado(modelo);
+}
+
+function actualizarMedio() {
+  porId('grupo-medio').hidden = !porId('tipo-redox').checked;
+}
+
+function alBalancear() {
+  const texto = porId('ecuacion').value;
+  const tipo = porId('tipo-redox').checked ? 'redox' : 'tradicional';
+  const medio = porId('medio-basico').checked ? 'basico' : 'acido';
+  reiniciarSalidas();
+  try {
+    renderizar(balancearEcuacion(texto, tipo, medio));
+  } catch (e) {
+    if (e instanceof ErrorQuimico) {
+      mostrarError(e.message);
+    } else {
+      console.error(e);
+      mostrarError('Ocurrió un error interno y no se presenta ningún resultado. Revisa la ecuación o reporta el problema.');
+    }
+  }
+}
+
+function alLimpiar() {
+  porId('ecuacion').value = '';
+  reiniciarSalidas();
+  porId('ecuacion').focus();
+}
+
+function cargarEjemplo(boton) {
+  const esRedox = boton.dataset.tipo === 'redox';
+  porId('tipo-redox').checked = esRedox;
+  porId('tipo-tradicional').checked = !esRedox;
+  porId('medio-basico').checked = boton.dataset.medio === 'basico';
+  porId('medio-acido').checked = boton.dataset.medio !== 'basico';
+  porId('ecuacion').value = boton.dataset.ecuacion;
+  actualizarMedio();
+  reiniciarSalidas();
+}
+
+function iniciarInterfaz() {
+  porId('formulario').addEventListener('submit', e => { e.preventDefault(); alBalancear(); });
+  porId('btn-limpiar').addEventListener('click', alLimpiar);
+  ['tipo-tradicional', 'tipo-redox'].forEach(id => porId(id).addEventListener('change', actualizarMedio));
+  document.querySelectorAll('.ejemplo').forEach(b => b.addEventListener('click', () => cargarEjemplo(b)));
+  actualizarMedio();
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciarInterfaz);
+  else iniciarInterfaz();
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { balancearEcuacion, htmlProcedimientoTradicional, htmlProcedimientoRedox, matrizATexto, escaparHTML };
+}
+
+</script>
+</body>
+</html>
